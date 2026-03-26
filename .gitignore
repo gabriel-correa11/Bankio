@@ -36,6 +36,12 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# local notes
+PROGRESSO.md
+
+# environment variables
+.env
+
 # generated native folders
 /ios
 /android
