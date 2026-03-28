@@ -4,7 +4,13 @@ export const AppColors = {
   midBlue: '#1E40AF',
   strongBlue: '#2563EB',
   lightBlue: '#BFDBFE',
+  softBlue: '#9BAEDD',
   white: '#FFFFFF',
   error: '#EF4444',
   success: '#22C55E',
+  warning: '#F59E0B',
+  gold: '#FBBF24',
+  accent: '#6366F1',
+  cardBg: '#162B5E',
+  muted: '#6B7FC4',
 };

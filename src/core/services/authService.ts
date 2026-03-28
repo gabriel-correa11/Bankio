@@ -8,6 +8,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../../firebaseConfig';
+import { defaultProgress } from './progressUtils';
 
 export async function signUp(email: string, password: string, name: string) {
   const credential = await createUserWithEmailAndPassword(auth, email, password);
@@ -19,6 +20,12 @@ export async function signUp(email: string, password: string, name: string) {
     name,
     email,
     createdAt: serverTimestamp(),
+  });
+
+  const progress = defaultProgress(credential.user.uid, name);
+  await setDoc(doc(db, 'userProgress', credential.user.uid), {
+    ...progress,
+    updatedAt: serverTimestamp(),
   });
 
   return credential.user;

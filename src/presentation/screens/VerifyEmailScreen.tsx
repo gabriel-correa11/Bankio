@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 15,
-    color: '#9BAEDD',
+    color: AppColors.softBlue,
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontSize: 13,
-    color: '#6B7FC4',
+    color: AppColors.muted,
     textAlign: 'center',
   },
   button: {

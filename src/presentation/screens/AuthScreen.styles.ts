@@ -1,0 +1,45 @@
+import { StyleSheet } from 'react-native';
+import { AppColors } from '../theme/colors';
+
+export const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: AppColors.darkBlue },
+  scroll: { flexGrow: 1, justifyContent: 'center', padding: 28 },
+  header: { alignItems: 'center', marginBottom: 36 },
+  title: { fontSize: 36, fontWeight: 'bold', color: AppColors.white, marginTop: 12, letterSpacing: 2 },
+  subtitle: { fontSize: 16, color: AppColors.lightBlue, marginTop: 6 },
+  form: { gap: 14 },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: AppColors.royalBlue,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: AppColors.midBlue,
+    paddingHorizontal: 12,
+  },
+  inputIcon: { marginRight: 8 },
+  input: { flex: 1, height: 50, color: AppColors.white, fontSize: 16 },
+  inputFlex: { flex: 1 },
+  eyeButton: { padding: 4 },
+  button: {
+    backgroundColor: AppColors.strongBlue,
+    borderRadius: 10,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
+    elevation: 4,
+  },
+  buttonDisabled: { opacity: 0.6 },
+  buttonText: { color: AppColors.white, fontSize: 18, fontWeight: 'bold' },
+  linkButton: { alignItems: 'center', paddingVertical: 6 },
+  linkText: { color: AppColors.lightBlue, fontSize: 14 },
+  toggleRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 8 },
+  toggleLabel: { color: AppColors.softBlue, fontSize: 14 },
+  toggleAction: {
+    color: AppColors.lightBlue,
+    fontSize: 14,
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+  },
+});
