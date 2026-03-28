@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function calcLevel(xp) {
+      return (xp / 100).toInt() + 1;
+    }
+
+    // ── users ──────────────────────────────────────────────────────────────
+    match /users/{uid} {
+      allow read, write: if isAuthenticated() && isOwner(uid);
+    }
+
+    // ── userProgress ───────────────────────────────────────────────────────
+    match /userProgress/{uid} {
+      allow read: if isAuthenticated() && isOwner(uid);
+
+      allow create: if isAuthenticated()
+        && isOwner(uid)
+        && incoming().uid == uid
+        && incoming().totalXP == 0
+        && incoming().level == 1
+        && incoming().dailyXP == 0;
+
+      allow update: if isAuthenticated()
+        && isOwner(uid)
+        && incoming().uid == existing().uid
+        // XP never decreases
+        && incoming().totalXP >= existing().totalXP
+        // Max XP per write = 10 questions × 20 XP = 200
+        && (incoming().totalXP - existing().totalXP) <= 200
+        // Level must be consistent with XP
+        && incoming().level == calcLevel(incoming().totalXP)
+        // Daily XP cap
+        && incoming().dailyXP <= 500
+        && incoming().dailyXP >= 0;
+    }
+
+    // ── leaderboard ────────────────────────────────────────────────────────
+    match /leaderboard/{uid} {
+      // Public read for ranking screen
+      allow read: if isAuthenticated();
+
+      allow write: if isAuthenticated()
+        && isOwner(uid)
+        && incoming().uid == uid
+        && incoming().totalXP >= 0
+        && incoming().level == calcLevel(incoming().totalXP);
+    }
+
+    // ── Deny everything else ───────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

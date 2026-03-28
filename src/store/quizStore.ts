@@ -1,12 +1,14 @@
 import { create } from 'zustand';
 import {
   QuizCategory, Question, UserProgress, LeaderboardEntry,
-  QuizSessionResult, FloodCheckResult,
+  QuizSessionResult,
 } from '../core/models/quiz';
+import { AchievementId } from '../core/models/achievement';
 import {
-  getQuestionsForCategory, getUserProgress, saveQuizResult,
-  getLeaderboard, checkFloodGuard,
+  getQuestionsForCategory, getUserProgress, computeQuizSave, persistQuizProgress,
+  getLeaderboard,
 } from '../core/services/quizService';
+import { defaultProgress } from '../core/services/progressUtils';
 
 interface QuizStore {
   userProgress: UserProgress | null;
@@ -17,13 +19,15 @@ interface QuizStore {
   currentIndex: number;
   answers: (number | null)[];
   sessionStartTime: number;
-  floodBlock: FloodCheckResult | null;
+  lastQuizAchievements: AchievementId[];
+  lastQuizLeveledUp: boolean;
+  lastQuizPreviousLevel: number;
   loadUserProgress: (uid: string, displayName?: string) => Promise<void>;
   loadLeaderboard: () => Promise<void>;
-  checkCanStartQuiz: (category: QuizCategory) => FloodCheckResult;
   startQuiz: (category: QuizCategory) => void;
   answerQuestion: (optionIndex: number) => void;
   nextQuestion: () => void;
+  prevQuestion: () => void;
   finishQuiz: (uid: string, displayName: string) => Promise<QuizSessionResult>;
   resetSession: () => void;
 }
@@ -37,13 +41,18 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
   currentIndex: 0,
   answers: [],
   sessionStartTime: 0,
-  floodBlock: null,
+  lastQuizAchievements: [],
+  lastQuizLeveledUp: false,
+  lastQuizPreviousLevel: 1,
 
   loadUserProgress: async (uid, displayName = '') => {
     set({ isLoadingProgress: true });
     try {
       const progress = await getUserProgress(uid, displayName);
       set({ userProgress: progress });
+    } catch {
+      // Offline or Firebase unavailable — use local defaults so the app still works
+      set({ userProgress: defaultProgress(uid, displayName) });
     } finally {
       set({ isLoadingProgress: false });
     }
@@ -54,14 +63,6 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     set({ leaderboard: entries });
   },
 
-  checkCanStartQuiz: (category) => {
-    const { userProgress } = get();
-    if (!userProgress) return { blocked: false, reason: null };
-    const result = checkFloodGuard(userProgress, category);
-    set({ floodBlock: result });
-    return result;
-  },
-
   startQuiz: (category) => {
     const questions = getQuestionsForCategory(category, 10);
     set({
@@ -70,7 +71,6 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
       currentIndex: 0,
       answers: new Array(questions.length).fill(null),
       sessionStartTime: Date.now(),
-      floodBlock: null,
     });
   },
 
@@ -88,8 +88,15 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     }
   },
 
-  finishQuiz: async (uid, displayName) => {
-    const { questions, answers, activeCategory, sessionStartTime } = get();
+  prevQuestion: () => {
+    const { currentIndex } = get();
+    if (currentIndex > 0) {
+      set({ currentIndex: currentIndex - 1 });
+    }
+  },
+
+  finishQuiz: (uid, displayName) => {
+    const { questions, answers, activeCategory, sessionStartTime, userProgress } = get();
     const timeTaken = Math.round((Date.now() - sessionStartTime) / 1000);
 
     let correctAnswers = 0;
@@ -109,10 +116,23 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
       timeTaken,
     };
 
-    const updated = await saveQuizResult(uid, result, displayName);
-    set({ userProgress: updated });
+    // Compute entirely from local state — no network needed
+    const current = userProgress ?? defaultProgress(uid, displayName);
+    const saveResult = computeQuizSave(current, result);
 
-    return result;
+    set({
+      userProgress: saveResult.progress,
+      lastQuizAchievements: saveResult.newAchievements,
+      lastQuizLeveledUp: saveResult.leveledUp,
+      lastQuizPreviousLevel: saveResult.previousLevel,
+    });
+
+    // Persist to Firestore in the background — does not block navigation
+    persistQuizProgress(uid, displayName, saveResult.progress).catch(() => {
+      // silently ignored — progress is already updated locally
+    });
+
+    return Promise.resolve({ ...result, xpEarned: saveResult.effectiveXP });
   },
 
   resetSession: () => {
@@ -122,6 +142,9 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
       currentIndex: 0,
       answers: [],
       sessionStartTime: 0,
+      lastQuizAchievements: [],
+      lastQuizLeveledUp: false,
+      lastQuizPreviousLevel: 1,
     });
   },
 }));

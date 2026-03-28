@@ -27,7 +27,7 @@ function getBlockLabel(reason: string | null, cooldownSecondsLeft?: number): str
 }
 
 export default function CategoryScreen({ navigation }: Props) {
-  const { userProgress, startQuiz, checkCanStartQuiz } = useQuizStore();
+  const { userProgress, startQuiz } = useQuizStore();
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -38,10 +38,11 @@ export default function CategoryScreen({ navigation }: Props) {
     if (!anyInCooldown) return;
     const id = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(id);
-  }, [userProgress, tick]);
+  }, [userProgress]); // tick intencionalmente fora: só precisa reiniciar quando o progresso muda
 
   function handleSelect(category: QuizCategory) {
-    const check = checkCanStartQuiz(category);
+    if (!userProgress) return;
+    const check = checkFloodGuard(userProgress, category);
     if (check.blocked) return;
     startQuiz(category);
     navigation.navigate('Quiz');

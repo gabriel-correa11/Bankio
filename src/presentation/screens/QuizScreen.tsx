@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated, SafeAreaView } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../../../App';
 import { useAuthStore } from '../../store/authStore';
@@ -7,13 +8,17 @@ import { useQuizStore } from '../../store/quizStore';
 import OptionButton from '../components/OptionButton';
 import { useQuizTimer } from '../hooks/useQuizTimer';
 import { styles } from './QuizScreen.styles';
+import { AppColors } from '../theme/colors';
 
 type Props = StackScreenProps<RootStackParamList, 'Quiz'>;
 type OptionState = 'idle' | 'selected' | 'correct' | 'wrong';
 
 export default function QuizScreen({ navigation }: Props) {
   const { user } = useAuthStore();
-  const { questions, currentIndex, answerQuestion, nextQuestion, finishQuiz, resetSession } = useQuizStore();
+  const {
+    questions, currentIndex, answers,
+    answerQuestion, nextQuestion, prevQuestion, finishQuiz, resetSession,
+  } = useQuizStore();
 
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -21,6 +26,7 @@ export default function QuizScreen({ navigation }: Props) {
 
   const xpAnim = useRef(new Animated.Value(0)).current;
   const xpOpacity = useRef(new Animated.Value(0)).current;
+  const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const question = questions[currentIndex];
   const isLastQuestion = currentIndex === questions.length - 1;
@@ -30,11 +36,30 @@ export default function QuizScreen({ navigation }: Props) {
     setSelectedAnswer(-1);
     setShowFeedback(true);
     answerQuestion(-1);
+    // auto-advance on timeout only for non-last questions
+    if (!isLastQuestion) {
+      autoAdvanceTimer.current = setTimeout(() => handleNext(), 900);
+    }
   });
 
+  // When currentIndex changes (next or back), sync local state from answers array
   useEffect(() => {
-    startTimer();
-    return stopTimer;
+    if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
+    const existingAnswer = answers[currentIndex];
+    if (existingAnswer !== null && existingAnswer !== undefined) {
+      // Already answered — show locked feedback, no timer
+      setSelectedAnswer(existingAnswer);
+      setShowFeedback(true);
+    } else {
+      // Fresh question — start timer
+      setSelectedAnswer(null);
+      setShowFeedback(false);
+      startTimer();
+    }
+    return () => {
+      stopTimer();
+      if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
+    };
   }, [currentIndex]);
 
   function handleAnswer(index: number) {
@@ -51,6 +76,10 @@ export default function QuizScreen({ navigation }: Props) {
         Animated.timing(xpOpacity, { toValue: 0, duration: 800, useNativeDriver: true }),
       ]).start();
     }
+    // Auto-advance only for non-last questions
+    if (!isLastQuestion) {
+      autoAdvanceTimer.current = setTimeout(() => handleNext(), 900);
+    }
   }
 
   async function handleNext() {
@@ -61,10 +90,13 @@ export default function QuizScreen({ navigation }: Props) {
       resetSession();
       navigation.replace('Results', { result });
     } else {
-      setSelectedAnswer(null);
-      setShowFeedback(false);
       nextQuestion();
     }
+  }
+
+  function handleBack() {
+    if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
+    prevQuestion();
   }
 
   function getOptionState(index: number): OptionState {
@@ -82,7 +114,14 @@ export default function QuizScreen({ navigation }: Props) {
         <Animated.View style={[styles.timerFill, { width: timerWidth, backgroundColor: timerColor }]} />
       </View>
       <View style={styles.header}>
-        <Text style={styles.questionCount}>{currentIndex + 1} / {questions.length}</Text>
+        <View style={styles.headerLeft}>
+          {currentIndex > 0 && (
+            <TouchableOpacity onPress={handleBack} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <MaterialIcons name="arrow-back-ios" size={18} color={AppColors.lightBlue} />
+            </TouchableOpacity>
+          )}
+          <Text style={styles.questionCount}>{currentIndex + 1} / {questions.length}</Text>
+        </View>
         <Text style={styles.timer}>{timeLeft}s</Text>
       </View>
       <View style={styles.questionWrap}>
@@ -90,7 +129,13 @@ export default function QuizScreen({ navigation }: Props) {
       </View>
       <View style={styles.optionsWrap}>
         {question.options.map((opt, i) => (
-          <OptionButton key={i} text={opt} state={getOptionState(i)} onPress={() => handleAnswer(i)} disabled={showFeedback} />
+          <OptionButton
+            key={i}
+            text={opt}
+            state={getOptionState(i)}
+            onPress={() => handleAnswer(i)}
+            disabled={showFeedback}
+          />
         ))}
       </View>
       {showFeedback && selectedAnswer === question.correctIndex && (
@@ -98,9 +143,13 @@ export default function QuizScreen({ navigation }: Props) {
           +{question.xpReward} XP
         </Animated.Text>
       )}
-      {showFeedback && (
-        <TouchableOpacity style={[styles.nextBtn, isFinishing && styles.nextBtnDisabled]} onPress={handleNext} disabled={isFinishing}>
-          <Text style={styles.nextBtnText}>{isLastQuestion ? 'Ver Resultado' : 'Próxima'}</Text>
+      {showFeedback && isLastQuestion && (
+        <TouchableOpacity
+          style={[styles.nextBtn, isFinishing && styles.nextBtnDisabled]}
+          onPress={handleNext}
+          disabled={isFinishing}
+        >
+          <Text style={styles.nextBtnText}>Ver Resultado</Text>
         </TouchableOpacity>
       )}
     </SafeAreaView>

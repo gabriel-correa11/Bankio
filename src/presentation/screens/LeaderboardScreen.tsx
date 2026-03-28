@@ -1,22 +1,18 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { StackScreenProps } from '@react-navigation/stack';
-import { RootStackParamList } from '../../../App';
 import { useAuthStore } from '../../store/authStore';
 import { useQuizStore } from '../../store/quizStore';
 import { LeaderboardEntry } from '../../core/models/quiz';
 import { AppColors } from '../theme/colors';
 import LevelBadge from '../components/LevelBadge';
 
-type Props = StackScreenProps<RootStackParamList, 'Leaderboard'>;
-
 const rankColors = [AppColors.gold, '#C0C0C0', '#CD7F32'];
 
-export default function LeaderboardScreen({ }: Props) {
+export default function LeaderboardScreen() {
   const { user } = useAuthStore();
   const { leaderboard, loadLeaderboard } = useQuizStore();
-  const [loading, setLoading] = React.useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadLeaderboard().finally(() => setLoading(false));

@@ -32,6 +32,8 @@ export interface UserProgress {
   dailyXPDate: string;
   dailyQuizzesByCategory: DailyQuizzesByCategory;
   dailyQuizzesDate: string;
+  unlockedAchievements: string[];
+  categoryQuizCounts: Record<QuizCategory, number>;
 }
 
 export type FloodBlockReason = 'cooldown' | 'dailyXPCap' | 'categoryDailyLimit' | null;

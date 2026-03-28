@@ -36,5 +36,7 @@ export function defaultProgress(uid: string, displayName: string): UserProgress 
     dailyXPDate: '',
     dailyQuizzesByCategory: emptyDailyQuizzes(),
     dailyQuizzesDate: '',
+    unlockedAchievements: [],
+    categoryQuizCounts: { poupanca: 0, investimentos: 0, credito: 0, orcamento: 0 },
   };
 }

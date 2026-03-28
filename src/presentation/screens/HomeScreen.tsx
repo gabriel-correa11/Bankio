@@ -17,6 +17,7 @@ import { AppColors } from '../theme/colors';
 import StatCard from '../components/StatCard';
 import ProgressBar from '../components/ProgressBar';
 import LevelBadge from '../components/LevelBadge';
+import { ACHIEVEMENTS } from '../../core/models/achievement';
 
 type Props = StackScreenProps<RootStackParamList, 'Home'>;
 
@@ -41,6 +42,8 @@ export default function HomeScreen({ navigation }: Props) {
   }, [user?.uid]);
 
   const xpInLevel = userProgress ? userProgress.totalXP % XP_PER_LEVEL : 0;
+  const achievementCount = userProgress?.unlockedAchievements?.length ?? 0;
+  const totalAchievements = Object.keys(ACHIEVEMENTS).length;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -75,7 +78,7 @@ export default function HomeScreen({ navigation }: Props) {
           </View>
           <View style={styles.statsRow}>
             <StatCard icon="quiz" label="Quizzes Feitos" value={userProgress?.completedQuizzes ?? 0} color={AppColors.accent} />
-            <StatCard icon="emoji-events" label="Nível" value={userProgress?.level ?? 1} color={AppColors.strongBlue} />
+            <StatCard icon="military-tech" label="Conquistas" value={`${achievementCount}/${totalAchievements}`} color={AppColors.gold} />
           </View>
 
           <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.navigate('Category')}>

@@ -17,6 +17,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
   },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  backBtn: { padding: 4 },
   questionCount: { color: AppColors.muted, fontSize: 14 },
   timer: { color: AppColors.lightBlue, fontSize: 16, fontWeight: '700' },
   questionWrap: {

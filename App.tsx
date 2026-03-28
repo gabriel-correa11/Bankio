@@ -49,13 +49,10 @@ export default function App() {
     );
   }
 
-  const initialRouteName = !user ? 'Auth' : !user.emailVerified ? 'VerifyEmail' : 'Home';
-
   return (
     <NavigationContainer>
       <StatusBar style="light" />
       <Stack.Navigator
-        initialRouteName={initialRouteName}
         screenOptions={{
           headerStyle: { backgroundColor: AppColors.royalBlue },
           headerTintColor: AppColors.white,
@@ -63,13 +60,19 @@ export default function App() {
           cardStyle: { backgroundColor: AppColors.darkBlue },
         }}
       >
-        <Stack.Screen name="Auth" component={AuthScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} options={{ title: 'Verificação de E-mail' }} />
-        <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Category" component={CategoryScreen} options={{ title: 'Categorias' }} />
-        <Stack.Screen name="Quiz" component={QuizScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Results" component={ResultsScreen} options={{ title: 'Resultado', headerLeft: () => null }} />
-        <Stack.Screen name="Leaderboard" component={LeaderboardScreen} options={{ title: 'Ranking Global' }} />
+        {!user ? (
+          <Stack.Screen name="Auth" component={AuthScreen} options={{ headerShown: false }} />
+        ) : !user.emailVerified ? (
+          <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} options={{ title: 'Verificação de E-mail' }} />
+        ) : (
+          <>
+            <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Category" component={CategoryScreen} options={{ title: 'Categorias' }} />
+            <Stack.Screen name="Quiz" component={QuizScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Results" component={ResultsScreen} options={{ title: 'Resultado', headerLeft: () => null }} />
+            <Stack.Screen name="Leaderboard" component={LeaderboardScreen} options={{ title: 'Ranking Global' }} />
+          </>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );
