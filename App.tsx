@@ -10,7 +10,10 @@ import { useAuthStore } from './src/store/authStore';
 import { AppColors } from './src/presentation/theme/colors';
 import { QuizSessionResult } from './src/core/models/quiz';
 
-import AuthScreen from './src/presentation/screens/AuthScreen';
+import LoginScreen from './src/presentation/screens/LoginScreen';
+import RegisterScreen from './src/presentation/screens/RegisterScreen';
+import ForgotPasswordRequestScreen from './src/presentation/screens/ForgotPasswordRequestScreen';
+import ForgotPasswordSentScreen from './src/presentation/screens/ForgotPasswordSentScreen';
 import VerifyEmailScreen from './src/presentation/screens/VerifyEmailScreen';
 import HomeScreen from './src/presentation/screens/HomeScreen';
 import CategoryScreen from './src/presentation/screens/CategoryScreen';
@@ -19,7 +22,10 @@ import ResultsScreen from './src/presentation/screens/ResultsScreen';
 import LeaderboardScreen from './src/presentation/screens/LeaderboardScreen';
 
 export type RootStackParamList = {
-  Auth: undefined;
+  Login: undefined;
+  Register: undefined;
+  ForgotPasswordRequest: undefined;
+  ForgotPasswordSent: { email: string };
   VerifyEmail: undefined;
   Home: undefined;
   Category: undefined;
@@ -61,7 +67,12 @@ export default function App() {
         }}
       >
         {!user ? (
-          <Stack.Screen name="Auth" component={AuthScreen} options={{ headerShown: false }} />
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="ForgotPasswordRequest" component={ForgotPasswordRequestScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="ForgotPasswordSent" component={ForgotPasswordSentScreen} options={{ headerShown: false }} />
+          </>
         ) : !user.emailVerified ? (
           <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} options={{ title: 'Verificação de E-mail' }} />
         ) : (
